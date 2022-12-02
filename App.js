@@ -13,56 +13,72 @@ export default function App() {
   const [pokeList, setPokeList] = useState([])
   const [currentPage, setCurrentPage] = useState("https://pokeapi.co/api/v2/pokemon")
 
-  async function getAllData(){
+  
+  
+  useEffect(()=>{
+    let isCancelled = false
+    
+    async function getAllData(){
+      const response = await axios.get(currentPage)
 
-    const response = await fetch(currentPage)
-    const data = await response.json()
+      if(!isCancelled){
+        setNextPage(response.data.next)
+        setPrevPage(response.data.previous)
+    
+        function getIndPokeData(result){
+          result.forEach(async pokemon => {
+            const objRes = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemon.name}`)
+            setPokeList(prevList => [...prevList, objRes.data])
+          })
+        }
+        getIndPokeData(response.data.results) 
+      }
+      
+      }
+    getAllData()
 
-    setNextPage(data.next)
-    setPrevPage(data.previous)
-
-    function getIndPokeData(result){
-      result.forEach(async pokemon => {
-        const objRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.name}`)
-        const objData = await objRes.json()
-        
-        setPokeList(prevList => [...prevList, objData])
-      })
+    return ()=>{
+      isCancelled = true
     }
 
-    getIndPokeData(data.results)
-    
-    
-  }
-
-
-  useEffect(()=>{
-    
-    getAllData()
   }, [currentPage])
 
   pokeList.sort((a, b) => a.id - b.id)
+  
 
   function renderPokemon(itemData){
-    const {name, sprites} = itemData.item
-
-    return <Card name={name} image={sprites.front_default} />
+    return <Card name={itemData.item.name} image={itemData.item.sprites.front_default} />
   }
 
+  function pressNext(){
+    setCurrentPage(nextPage)
+    setPokeList([])
+  }
+
+  function pressPrev(){
+    setCurrentPage(prevPage)
+    setPokeList([])
+  }
 
   return(
-    <View>
-      <Pressable>
-        <Text>Previous</Text>
-      </Pressable>
+    <View style={styles.container}>
+      <View style={styles.btnContainer}>
+        <Pressable
+          onPress={pressPrev}
+        >
+          <Text>Previous</Text>
+        </Pressable>
 
-      <Pressable>
-        <Text>Next</Text>
-      </Pressable>
+        <Pressable
+          onPress={pressNext}
+        >
+          <Text>Next</Text>
+        </Pressable>
+      </View>
 
       <FlatList 
         data={pokeList}
-        key={item => item.key}
+        keyExtractor={item => item.id}
         renderItem={renderPokemon}
         numColumns={2}
       />
@@ -72,5 +88,14 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-
+  container:{
+    flex: 1,
+    marginTop: 60
+  }, 
+  btnContainer:{
+    flexDirection: 'row',
+    width: "100%",
+    justifyContent: 'space-between',
+    padding: 10
+  }
 });
