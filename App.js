@@ -5,6 +5,8 @@ import axios from 'axios';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Card from './components/Card';
+import Pagination from './components/PageButtons';
+import Pokelist from './components/PokeList';
 
 export default function App() {
 
@@ -17,7 +19,7 @@ export default function App() {
   
   useEffect(()=>{
     let isCancelled = false
-    
+    setPokeList([])
     async function getAllData(){
       const response = await axios.get(currentPage)
 
@@ -62,26 +64,8 @@ export default function App() {
 
   return(
     <View style={styles.container}>
-      <View style={styles.btnContainer}>
-        <Pressable
-          onPress={pressPrev}
-        >
-          <Text>Previous</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={pressNext}
-        >
-          <Text>Next</Text>
-        </Pressable>
-      </View>
-
-      <FlatList 
-        data={pokeList}
-        keyExtractor={item => item.id}
-        renderItem={renderPokemon}
-        numColumns={2}
-      />
+      <Pagination goPrev={pressPrev} goNext={pressNext}/>
+      <Pokelist pokeData={pokeList} renderItem={renderPokemon} />
     </View>
   )
 
@@ -92,10 +76,5 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 60
   }, 
-  btnContainer:{
-    flexDirection: 'row',
-    width: "100%",
-    justifyContent: 'space-between',
-    padding: 10
-  }
+
 });
